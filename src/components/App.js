@@ -1,24 +1,25 @@
 import React, { useState, useRef, useEffect } from "react";
-import '../styles/App.css';
+import "../styles/App.css";
 
 const App = () => {
-  const [time, setTime] = useState(0); // time in centiseconds (10ms)
+  const [time, setTime] = useState(0); // in centiseconds
   const [isRunning, setIsRunning] = useState(false);
   const [laps, setLaps] = useState([]);
-
   const intervalRef = useRef(null);
 
-  // Start Timer
+  useEffect(() => {
+    return () => clearInterval(intervalRef.current); // cleanup
+  }, []);
+
   const startTimer = () => {
     if (!isRunning) {
       setIsRunning(true);
       intervalRef.current = setInterval(() => {
-        setTime(prev => prev + 1);
+        setTime((prev) => prev + 1);
       }, 10); // 10ms = 1 centisecond
     }
   };
 
-  // Stop Timer
   const stopTimer = () => {
     if (isRunning) {
       clearInterval(intervalRef.current);
@@ -26,7 +27,6 @@ const App = () => {
     }
   };
 
-  // Reset Timer
   const resetTimer = () => {
     clearInterval(intervalRef.current);
     setIsRunning(false);
@@ -34,44 +34,37 @@ const App = () => {
     setLaps([]);
   };
 
-  // Lap Timer
   const recordLap = () => {
     if (isRunning) {
       setLaps([...laps, time]);
     }
   };
 
-  // Clear interval on unmount
-  useEffect(() => {
-    return () => clearInterval(intervalRef.current);
-  }, []);
+  const pad = (n) => n.toString().padStart(2, '0');
 
-  // Format Time Utility
-  const formatTime = (centiseconds) => {
-    const minutes = Math.floor(centiseconds / 6000);
-    const seconds = Math.floor((centiseconds % 6000) / 100);
-    const centis = centiseconds % 100;
-
-    return `${pad(minutes)}:${pad(seconds)}.${pad(centis)}`;
+  const formatTime = (cs) => {
+    const minutes = Math.floor(cs / 6000);
+    const seconds = Math.floor((cs % 6000) / 100);
+    const centis = cs % 100;
+    return `${pad(minutes)}:${pad(seconds)}:${pad(centis)}`;
   };
-
-  const pad = (num) => num.toString().padStart(2, "0");
 
   return (
     <div className="app">
       <h1>Lap Timer</h1>
-      <div className="timer">{formatTime(time)}</div>
+      <div className="timer" data-testid="timer">{formatTime(time)}</div>
       <div className="buttons">
         <button onClick={startTimer} disabled={isRunning}>Start</button>
         <button onClick={stopTimer} disabled={!isRunning}>Stop</button>
         <button onClick={recordLap} disabled={!isRunning}>Lap</button>
         <button onClick={resetTimer}>Reset</button>
       </div>
-      <div className="laps">
-        {laps.map((lapTime, index) => (
-          <div key={index}>{formatTime(lapTime)}</div>
+
+      <ul className="laps">
+        {laps.map((lap, index) => (
+          <li key={index}>Lap {index + 1}: {formatTime(lap)}</li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 };
